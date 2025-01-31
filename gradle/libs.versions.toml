@@ -1,8 +1,35 @@
 [versions]
+anigifKmp = "0.2.1"
+kermit = "2.0.4"
 kotlin = "2.1.0"
+kotlinCoroutines = "1.10.1"
+kotlinDatetime = "0.6.0"
+kotlinSerialization = "1.6.3"
+ktor = "2.3.0"
+smsCore = "1.5.3"
 
 [libraries]
-kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+# SMS
+sms-core = { group = "dk.spilpind", name = "sms-core", version.ref = "smsCore" }
+
+# Kotlin
+kotlin-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinCoroutines" }
+kotlin-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinDatetime" }
+kotlin-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinSerialization" }
+
+# Ktor
+ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-client-websockets = { group = "io.ktor", name = "ktor-client-websockets", version.ref = "ktor" }
+ktor-serialization-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
+
+# Misc
+anigif-kmp = { group = "dk.anigif", name = "anigif-kmp", version.ref = "anigifKmp" }
+kermit = { group = "co.touchlab", name = "kermit", version.ref = "kermit" }
+
+# Test
+kotlin-test = { group = "org.jetbrains.kotlin", name = "kotlin-test", version.ref = "kotlin" }
+kotlin-test-coroutines = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinCoroutines" }
+ktor-test-client-mock = { group = "io.ktor", name = "ktor-client-mock", version.ref = "ktor" }
 
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
