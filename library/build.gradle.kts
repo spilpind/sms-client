@@ -1,9 +1,14 @@
+import java.net.URI
+
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
+
+    id("maven-publish")
 }
 
 group = "dk.spilpind"
-version = "0.1.0"
+version = "0.1.0-dev"
+val baseArtifactId = "sms-client"
 
 kotlin {
     jvm()
@@ -37,6 +42,27 @@ kotlin {
                 implementation(libs.kotlin.test)
                 implementation(libs.kotlin.test.coroutines)
                 implementation(libs.ktor.test.client.mock)
+            }
+        }
+    }
+}
+
+publishing {
+    publications {
+        publications.withType<MavenPublication> {
+            if (artifactId.startsWith(project.name, ignoreCase = true)) {
+                artifactId = artifactId.replaceFirst(project.name, baseArtifactId)
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = URI("https://maven.pkg.github.com/anigif/anigif-kmp")
+            credentials {
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
             }
         }
     }
