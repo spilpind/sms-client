@@ -38,8 +38,10 @@ include(":library")
 
 private fun PasswordCredentials.setGithubCredentials() {
     val propertyFile = File(rootProject.projectDir, "local.properties")
-    val properties = Properties().apply {
-        load(FileInputStream(propertyFile))
+    val properties = Properties()
+    if (propertyFile.exists()) {
+        val inputStream = FileInputStream(propertyFile)
+        properties.load(inputStream)
     }
 
     val propertyUsernameKey = "github.username"
@@ -78,7 +80,7 @@ private fun PasswordCredentials.setGithubCredentials() {
 
     throw IllegalArgumentException(
         "In order to use Github packages, " +
-                "$propertyUsernameKey/$propertyPasswordKey needs to be set in ${propertyFile.path} " +
-                "or $environmentUsernameKey/$environmentPasswordKey needs to be set as environment variables"
+            "$propertyUsernameKey/$propertyPasswordKey needs to be set in ${propertyFile.path} " +
+            "or $environmentUsernameKey/$environmentPasswordKey needs to be set as environment variables"
     )
 }
