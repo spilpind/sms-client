@@ -13,17 +13,36 @@ import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
 import kotlin.coroutines.CoroutineContext
 
+/**
+ * Test helper that makes it possible to create and interact with a fake websocket connection
+ */
 class TestSocketConnection {
     private val _incoming = Channel<Frame>()
     private val _outgoing = Channel<Frame>()
 
+    /**
+     * This represents the [Frame]s that will be sent to the client which is using the fake websocket. In a real
+     * scenario this would be the frames sent from a server to the client
+     */
     val clientIncoming: SendChannel<Frame> = _incoming
 
+    /**
+     * This represents the [Frame]s sent from the client which is using the fake websocket. In a real scenario this
+     * would be the frames sent from the client to a server
+     */
     val clientOutgoing: ReceiveChannel<Frame> = _outgoing
 
+    /**
+     * How many times [startFakeSocket] has been called
+     */
     var startCount = 0
         private set
 
+    /**
+     * Starts a new fake socket and suspends until the call to [block] completes. This should never be called more than
+     * once per instance of [TestSocketConnection] and if it is, [clientIncoming] and [clientOutgoing] might act weird.
+     * Use [startCount] to see how many times this method was called
+     */
     suspend fun startFakeSocket(
         client: HttpClient,
         block: suspend DefaultClientWebSocketSession.() -> Unit
