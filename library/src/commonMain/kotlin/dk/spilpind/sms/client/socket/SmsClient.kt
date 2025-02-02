@@ -229,11 +229,11 @@ class SmsClient(
 
     /**
      * Sends the [action] to the endpoint and returns the reaction to that request. This operation is limited by a
-     * timeout which will result in [RequestResult.Error] being returned. Note that a timeout might not always mean that
-     * the server is slow at responding but could also mean that some error happened so we couldn't map the response to
-     * the request (e.g. if the request or response was malformed)
+     * timeout which will result in [Answer.Error] being returned. Note that a timeout might not always mean that the
+     * server is slow at responding but could also mean that some error happened such that we couldn't map the response
+     * to the request (e.g. if the request or response was malformed)
      */
-    suspend fun send(action: ContextAction): RequestResult<ReactionData> {
+    suspend fun send(action: ContextAction): Answer<ReactionData> {
         val request = action.toRequest(actionId = "${++lastActionId}")
 
         val data = try {
@@ -251,9 +251,9 @@ class SmsClient(
         }
 
         return if (data != null) {
-            RequestResult.Result(data = data)
+            Answer.Data(data = data)
         } else {
-            RequestResult.Error(localizedMessage = null)
+            Answer.Error(localizedMessage = null)
         }
     }
 

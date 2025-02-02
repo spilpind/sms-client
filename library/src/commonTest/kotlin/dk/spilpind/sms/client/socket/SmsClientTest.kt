@@ -83,7 +83,7 @@ class SmsClientTest {
             socketConnection = socketConnection
         )
 
-        var result: RequestResult<ReactionData>? = null
+        var result: Answer<ReactionData>? = null
         launch {
             result = client.send(TournamentAction.Add("dummy"))
         }
@@ -153,7 +153,7 @@ class SmsClientTest {
         runCurrent()
 
         val finalResult = result
-        assertIs<RequestResult.Result<ReactionData>>(finalResult)
+        assertIs<Answer.Data<ReactionData>>(finalResult)
         assertEquals(
             TournamentReaction.Added(
                 tournament = TournamentReaction.Tournament(
@@ -241,7 +241,7 @@ class SmsClientTest {
 
         val result = client.send(TournamentAction.Add("dummy"))
         assertEquals(1, socketConnection.startCount, message = "Expected socket connection created at this point")
-        assertIs<RequestResult.Result<ReactionData>>(result)
+        assertIs<Answer.Data<ReactionData>>(result)
         assertEquals(
             TournamentReaction.Added(
                 tournament = TournamentReaction.Tournament(
@@ -302,7 +302,7 @@ class SmsClientTest {
             assertTrue(subscriptionMessage.isSuccess, message = "Expected subscription message")
         }
 
-        var result: RequestResult<ReactionData>? = null
+        var result: Answer<ReactionData>? = null
         launch {
             result = client.send(TournamentAction.Add("dummy"))
         }
@@ -334,7 +334,7 @@ class SmsClientTest {
 
         runCurrent()
         val finalResult = result
-        assertIs<RequestResult.Result<ReactionData>>(finalResult)
+        assertIs<Answer.Data<ReactionData>>(finalResult)
         assertEquals(
             TournamentReaction.Added(
                 tournament = TournamentReaction.Tournament(
@@ -365,7 +365,7 @@ class SmsClientTest {
 
         val result = client.send(TournamentAction.Add("dummy"))
 
-        assertIs<RequestResult.Error>(result)
+        assertIs<Answer.Error>(result)
     }
 
     @Test
@@ -379,7 +379,7 @@ class SmsClientTest {
             engine = mockEngine
         )
 
-        var result: RequestResult<ReactionData>? = null
+        var result: Answer<ReactionData>? = null
         backgroundScope.launch {
             result = client.send(TournamentAction.Add("dummy"))
         }
@@ -388,7 +388,7 @@ class SmsClientTest {
         advanceTimeBy(19900)
         assertNull(result)
         advanceTimeBy(200)
-        assertIs<RequestResult.Error>(result)
+        assertIs<Answer.Error>(result)
     }
 
     @Test
@@ -400,7 +400,7 @@ class SmsClientTest {
             socketConnection = socketConnection
         )
 
-        var result: RequestResult<ReactionData>? = null
+        var result: Answer<ReactionData>? = null
         backgroundScope.launch {
             result = client.send(TournamentAction.Add("dummy"))
         }
@@ -410,7 +410,7 @@ class SmsClientTest {
         assertEquals(1, socketConnection.startCount, message = "Expected socket connection created at this point")
         assertNull(result)
         advanceTimeBy(200)
-        assertIs<RequestResult.Error>(result)
+        assertIs<Answer.Error>(result)
 
         val remainingOutgoingResult = socketConnection.clientOutgoing.tryReceive()
         assertTrue(remainingOutgoingResult.isFailure, message = "Did not expect any remaining messages")
@@ -426,7 +426,7 @@ class SmsClientTest {
             socketConnection = socketConnection
         )
 
-        var result: RequestResult<ReactionData>? = null
+        var result: Answer<ReactionData>? = null
         backgroundScope.launch {
             result = client.send(TournamentAction.Add("dummy"))
         }
@@ -439,7 +439,7 @@ class SmsClientTest {
         advanceTimeBy(4900)
         assertNull(result)
         advanceTimeBy(200)
-        assertIs<RequestResult.Error>(result)
+        assertIs<Answer.Error>(result)
 
         val remainingOutgoingResult = socketConnection.clientOutgoing.tryReceive()
         assertTrue(remainingOutgoingResult.isFailure, message = "Did not expect any remaining messages")
@@ -455,7 +455,7 @@ class SmsClientTest {
             socketConnection = socketConnection
         )
 
-        var result: RequestResult<ReactionData>? = null
+        var result: Answer<ReactionData>? = null
         backgroundScope.launch {
             result = client.send(TournamentAction.Add("dummy"))
         }
@@ -467,7 +467,7 @@ class SmsClientTest {
 
         socketConnection.clientIncoming.send(Frame.Close())
         runCurrent()
-        assertIs<RequestResult.Error>(result)
+        assertIs<Answer.Error>(result)
 
         val remainingOutgoingResult = socketConnection.clientOutgoing.tryReceive()
         assertTrue(remainingOutgoingResult.isFailure, message = "Did not expect any remaining messages")
@@ -484,7 +484,7 @@ class SmsClientTest {
             socketConnection = socketConnection
         )
 
-        var result: RequestResult<ReactionData>? = null
+        var result: Answer<ReactionData>? = null
         backgroundScope.launch {
             result = client.send(TournamentAction.Add("dummy"))
         }
@@ -498,7 +498,7 @@ class SmsClientTest {
 
         socketConnection.clientIncoming.send(Frame.Close())
         runCurrent()
-        assertIs<RequestResult.Error>(result)
+        assertIs<Answer.Error>(result)
 
         val remainingOutgoingResult = socketConnection.clientOutgoing.tryReceive()
         assertTrue(remainingOutgoingResult.isFailure, message = "Did not expect any remaining messages")
@@ -514,7 +514,7 @@ class SmsClientTest {
             socketConnection = socketConnection
         )
 
-        var result: RequestResult<ReactionData>? = null
+        var result: Answer<ReactionData>? = null
         backgroundScope.launch {
             result = client.send(TournamentAction.Add("dummy"))
         }
@@ -526,7 +526,7 @@ class SmsClientTest {
         socketConnection.clientIncoming.close()
 
         runCurrent()
-        assertIs<RequestResult.Error>(result)
+        assertIs<Answer.Error>(result)
 
         val remainingOutgoingResult = socketConnection.clientOutgoing.tryReceive()
         assertTrue(remainingOutgoingResult.isFailure, message = "Did not expect any remaining messages")
@@ -542,7 +542,7 @@ class SmsClientTest {
             socketConnection = socketConnection
         )
 
-        var result: RequestResult<ReactionData>? = null
+        var result: Answer<ReactionData>? = null
         backgroundScope.launch {
             result = client.send(TournamentAction.Add("dummy"))
         }
@@ -556,7 +556,7 @@ class SmsClientTest {
 
         socketConnection.clientIncoming.close()
         runCurrent()
-        assertIs<RequestResult.Error>(result)
+        assertIs<Answer.Error>(result)
 
         val remainingOutgoingResult = socketConnection.clientOutgoing.tryReceive()
         assertTrue(remainingOutgoingResult.isFailure, message = "Did not expect any remaining messages")
@@ -578,7 +578,7 @@ class SmsClientTest {
         runCurrent()
         assertEquals(0, socketConnection.startCount, message = "Did not expect socket connection created at this point")
 
-        var result: RequestResult<ReactionData>? = null
+        var result: Answer<ReactionData>? = null
         backgroundScope.launch {
             result = client.send(TournamentAction.Add("dummy"))
         }
@@ -589,7 +589,7 @@ class SmsClientTest {
 
         clientJob.cancel()
         runCurrent()
-        assertIs<RequestResult.Error>(result)
+        assertIs<Answer.Error>(result)
 
         val remainingOutgoingResult = socketConnection.clientOutgoing.tryReceive()
         assertTrue(remainingOutgoingResult.isFailure, message = "Did not expect any remaining messages")
@@ -612,7 +612,7 @@ class SmsClientTest {
         runCurrent()
         assertEquals(0, socketConnection.startCount, message = "Did not expect socket connection created at this point")
 
-        var result: RequestResult<ReactionData>? = null
+        var result: Answer<ReactionData>? = null
         backgroundScope.launch {
             result = client.send(TournamentAction.Add("dummy"))
         }
@@ -626,7 +626,7 @@ class SmsClientTest {
 
         clientJob.cancel()
         runCurrent()
-        assertIs<RequestResult.Error>(result)
+        assertIs<Answer.Error>(result)
 
         val remainingOutgoingResult = socketConnection.clientOutgoing.tryReceive()
         assertTrue(remainingOutgoingResult.isFailure, message = "Did not expect any remaining messages")
@@ -651,13 +651,13 @@ class SmsClientTest {
         runCurrent()
         assertEquals(0, socketConnection.startCount, message = "Did not expect socket connection created at this point")
 
-        var result: RequestResult<ReactionData>? = null
+        var result: Answer<ReactionData>? = null
         backgroundScope.launch {
             result = client.send(TournamentAction.Add("dummy"))
         }
 
         runCurrent()
-        assertIs<RequestResult.Error>(result)
+        assertIs<Answer.Error>(result)
 
         val remainingOutgoingResult = socketConnection.clientOutgoing.tryReceive()
         assertTrue(remainingOutgoingResult.isFailure, message = "Did not expect any remaining messages")
