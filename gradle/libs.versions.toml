@@ -6,7 +6,7 @@ kotlinCoroutines = "1.10.1"
 kotlinDatetime = "0.6.0"
 kotlinSerialization = "1.6.3"
 ktor = "2.3.0"
-smsCore = "1.5.3"
+smsCore = "1.5.4"
 
 [libraries]
 # SMS
