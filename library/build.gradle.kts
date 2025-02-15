@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "dk.spilpind"
-version = "0.1.0-dev"
+version = "0.2.0-dev"
 val baseArtifactId = "sms-client"
 
 kotlin {
@@ -64,7 +64,7 @@ publishing {
     repositories {
         maven {
             name = "GitHubPackages"
-            url = URI("https://maven.pkg.github.com/anigif/anigif-kmp")
+            url = URI("https://maven.pkg.github.com/spilpind/sms-client")
             credentials {
                 username = System.getenv("GITHUB_ACTOR")
                 password = System.getenv("GITHUB_TOKEN")
