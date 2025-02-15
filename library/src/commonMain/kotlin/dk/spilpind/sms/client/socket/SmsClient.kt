@@ -23,7 +23,6 @@ import io.ktor.client.plugins.websocket.wss
 import io.ktor.client.request.get
 import io.ktor.serialization.ContentConvertException
 import io.ktor.serialization.kotlinx.json.json
-import io.ktor.utils.io.errors.IOException
 import io.ktor.websocket.Frame
 import io.ktor.websocket.readReason
 import io.ktor.websocket.readText
@@ -53,6 +52,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.selects.select
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
+import kotlinx.io.IOException
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlin.coroutines.resume

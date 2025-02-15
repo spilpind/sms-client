@@ -1,12 +1,12 @@
 [versions]
 anigifKmp = "0.2.1"
 kermit = "2.0.4"
-kotlin = "2.1.0"
+kotlin = "2.1.10"
 kotlinCoroutines = "1.10.1"
-kotlinDatetime = "0.6.0"
+kotlinDatetime = "0.6.2"
 kotlinSerialization = "1.6.3"
-ktor = "2.3.0"
-smsCore = "1.5.3"
+ktor = "3.1.0"
+smsCore = "1.5.4"
 
 [libraries]
 # SMS

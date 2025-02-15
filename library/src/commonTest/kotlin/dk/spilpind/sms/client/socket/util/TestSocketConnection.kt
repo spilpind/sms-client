@@ -3,10 +3,9 @@ package dk.spilpind.sms.client.socket.util
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.websocket.*
-import io.ktor.util.*
+import io.ktor.utils.io.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.GlobalScope.coroutineContext
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
@@ -76,7 +75,7 @@ class TestSocketConnection {
                 throw NotImplementedError()
             }
 
-            @InternalAPI
+            @OptIn(InternalAPI::class)
             override fun start(negotiatedExtensions: List<WebSocketExtension<*>>) {
                 throw NotImplementedError()
             }
