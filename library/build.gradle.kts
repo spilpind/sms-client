@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "dk.spilpind"
-version = "0.2.0-dev"
+version = resolveLibraryVersion()
 val baseArtifactId = "sms-client"
 
 kotlin {
@@ -70,6 +70,16 @@ publishing {
                 password = System.getenv("GITHUB_TOKEN")
             }
         }
+    }
+}
+
+fun resolveLibraryVersion(): String {
+    val versionProperty = findProperty("libraryVersion") as? String
+
+    return if (versionProperty.isNullOrBlank()) {
+        "local"
+    } else {
+        versionProperty
     }
 }
 
