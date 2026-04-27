@@ -103,6 +103,14 @@ class SmsClient(
         // the extra time the connection is active (e.g. if app is put in the background)
         private const val STARTUP_MINIMUM_LIFETIME_MS = 5_000L
 
+        private val JSON_CONFIGURATION = Json {
+            // Ensure decoding doesn't fail if there's new keys we didn't know about (e.g. keys that represents
+            // additional info that isn't relevant for older versions of the client)
+            ignoreUnknownKeys = true
+
+            // We (at least for now) want to be explicit about all fields
+            encodeDefaults = true
+        }
     }
 
     data class WebsocketConfig(val host: String, val path: String)
@@ -653,10 +661,11 @@ class SmsClient(
 
                     val messageText = message.readText()
                     val response = try {
-                        // Decode message. We ignore unknown keys so the API can add new keys which represent additional
-                        // info without breaking the old apps
-                        val jsonDecoder = Json { ignoreUnknownKeys = true }
-                        jsonDecoder.decodeFromString(ResponseSerializerInterceptor, messageText)
+                        // Decode message
+                        JSON_CONFIGURATION.decodeFromString(
+                            deserializer = ResponseSerializerInterceptor,
+                            string = messageText
+                        )
                     } catch (exception: ResponseSerializerInterceptor.ConversionException) {
                         Logger.unexpected(
                             messageString = "Could not serialize incoming response: $messageText",
@@ -684,7 +693,7 @@ class SmsClient(
     private fun HttpClientConfig<*>.installPlugins() {
         install(WebSockets)
         install(ContentNegotiation) {
-            json()
+            json(JSON_CONFIGURATION)
         }
     }
 
