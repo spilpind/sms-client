@@ -39,11 +39,11 @@ import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.combineTransform
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onSubscription
 import kotlinx.coroutines.flow.shareIn
@@ -142,20 +142,21 @@ class SmsClient(
     }
 
     private val outgoingRequests = Channel<Pair<Request, CancellableContinuation<Unit>>>()
-    private val incomingResponses: SharedFlow<IncomingResponseEvent> = flow {
+    private val incomingResponses: SharedFlow<IncomingResponseEvent> = channelFlow {
+        val emitter = FlowCollector<IncomingResponseEvent> { send(it) }
 
         // Mainly to make sure send can drop this event safely and still get notified about an early close
-        emit(IncomingResponseEvent.NotStarted)
+        emitter.emit(IncomingResponseEvent.NotStarted)
 
         while (true) {
-            waitForServerStartAllowed(incomingResponses = this)
+            waitForServerStartAllowed(incomingResponses = emitter)
 
-            val connectionResult = runServerConnection(incomingResponses = this)
+            val connectionResult = runServerConnection(incomingResponses = emitter)
 
             // We want to emit close no matter what to make sure subscribe works properly - even though it might impact
             // the experience with single-send calls (like calling send with an add action), as they (at the moment of
             // writing) will be cancelled with an error when we emit close
-            emit(IncomingResponseEvent.Closed)
+            emitter.emit(IncomingResponseEvent.Closed)
 
             val resultingServerStatus = when (connectionResult) {
                 is ConnectionResult.ServerStatus -> connectionResult.serverStatus
