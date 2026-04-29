@@ -32,10 +32,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -143,20 +143,19 @@ class SmsClient(
 
     private val outgoingRequests = Channel<Pair<Request, CancellableContinuation<Unit>>>()
     private val incomingResponses: SharedFlow<IncomingResponseEvent> = channelFlow {
-        val emitter = FlowCollector<IncomingResponseEvent> { send(it) }
 
         // Mainly to make sure send can drop this event safely and still get notified about an early close
-        emitter.emit(IncomingResponseEvent.NotStarted)
+        send(IncomingResponseEvent.NotStarted)
 
         while (true) {
-            waitForServerStartAllowed(incomingResponses = emitter)
+            waitForServerStartAllowed(incomingResponses = this)
 
-            val connectionResult = runServerConnection(incomingResponses = emitter)
+            val connectionResult = runServerConnection(incomingResponses = this)
 
             // We want to emit close no matter what to make sure subscribe works properly - even though it might impact
             // the experience with single-send calls (like calling send with an add action), as they (at the moment of
             // writing) will be cancelled with an error when we emit close
-            emitter.emit(IncomingResponseEvent.Closed)
+            send(IncomingResponseEvent.Closed)
 
             val resultingServerStatus = when (connectionResult) {
                 is ConnectionResult.ServerStatus -> connectionResult.serverStatus
@@ -467,7 +466,7 @@ class SmsClient(
     }
 
 
-    private suspend fun waitForServerStartAllowed(incomingResponses: FlowCollector<IncomingResponseEvent>) {
+    private suspend fun waitForServerStartAllowed(incomingResponses: SendChannel<IncomingResponseEvent>) {
         when (val state = state.value) {
             SmsClientState.StopRequested,
             SmsClientState.Stopped -> {
@@ -475,7 +474,7 @@ class SmsClient(
                 // server is resolved so we'll let the caller know we're closing down until further notice
                 while (true) {
                     val (_, continuation) = outgoingRequests.receive()
-                    incomingResponses.emit(IncomingResponseEvent.Closed)
+                    incomingResponses.send(IncomingResponseEvent.Closed)
                     continuation.resume(Unit) // TODO: Could we avoid this by handling it in send?
                 }
             }
@@ -490,7 +489,7 @@ class SmsClient(
     }
 
     private suspend fun runServerConnection(
-        incomingResponses: FlowCollector<IncomingResponseEvent>
+        incomingResponses: SendChannel<IncomingResponseEvent>
     ): ConnectionResult {
         val host = if (!useBetaEndpoint) {
             SERVER_PROD_HOST
@@ -576,7 +575,7 @@ class SmsClient(
         }
     }
 
-    private suspend fun runWebSocket(host: String, incomingResponses: FlowCollector<IncomingResponseEvent>) {
+    private suspend fun runWebSocket(host: String, incomingResponses: SendChannel<IncomingResponseEvent>) {
         Logger.i("Starting connect to web socket")
 
         _state.value = SmsClientState.Starting
@@ -615,7 +614,7 @@ class SmsClient(
                 }
             }
 
-            incomingResponses.emit(IncomingResponseEvent.Ready)
+            incomingResponses.send(IncomingResponseEvent.Ready)
             _state.value = SmsClientState.Ready
 
             Logger.i("Web socket client ready. Started listening for incoming messages")
@@ -683,7 +682,7 @@ class SmsClient(
 
                     Logger.d("Received response: $response")
 
-                    incomingResponses.emit(IncomingResponseEvent.RegularResponse(response))
+                    incomingResponses.send(IncomingResponseEvent.RegularResponse(response))
                 }
             } finally {
                 outgoingRequestJob.cancel()
