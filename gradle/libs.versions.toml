@@ -4,7 +4,6 @@ kermit = "2.0.4"
 kotlin = "2.1.10"
 kotlinCoroutines = "1.10.1"
 kotlinDatetime = "0.6.2"
-kotlinSerialization = "1.6.3"
 ktor = "3.1.0"
 smsCore = "1.5.4"
 
@@ -15,7 +14,6 @@ sms-core = { group = "dk.spilpind", name = "sms-core", version.ref = "smsCore" }
 # Kotlin
 kotlin-coroutines-core = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlinCoroutines" }
 kotlin-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinDatetime" }
-kotlin-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinSerialization" }
 
 # Ktor
 ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
