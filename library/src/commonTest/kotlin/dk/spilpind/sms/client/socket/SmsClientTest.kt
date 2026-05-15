@@ -64,7 +64,8 @@ class SmsClientTest {
                     Json.encodeToString(
                         Status(
                             type = Status.Type.Open,
-                            localizedMessage = null
+                            localizedMessage = null,
+                            version = null
                         )
                     )
                 ),
@@ -109,6 +110,9 @@ class SmsClientTest {
                     name = "dummy-tournament",
                     isPublic = false,
                     tags = listOf(),
+                    isLocked = false,
+                    startDate = null,
+                    endDate = null,
                 )
             )
         )
@@ -127,6 +131,9 @@ class SmsClientTest {
                     name = "dummy-tournament",
                     isPublic = false,
                     tags = listOf(),
+                    isLocked = false,
+                    startDate = null,
+                    endDate = null,
                 )
             )
         )
@@ -145,6 +152,9 @@ class SmsClientTest {
                     name = "dummy-tournament",
                     isPublic = false,
                     tags = listOf("tigtag"),
+                    isLocked = false,
+                    startDate = null,
+                    endDate = null,
                 )
             )
         )
@@ -161,6 +171,9 @@ class SmsClientTest {
                     name = "dummy-tournament",
                     isPublic = false,
                     tags = listOf("tigtag"),
+                    isLocked = false,
+                    startDate = null,
+                    endDate = null,
                 )
             ),
             finalResult.data
@@ -230,6 +243,9 @@ class SmsClientTest {
                         name = "dummy-tournament",
                         isPublic = false,
                         tags = listOf("taggy"),
+                        isLocked = false,
+                        startDate = null,
+                        endDate = null,
                     )
                 )
             )
@@ -249,6 +265,9 @@ class SmsClientTest {
                     name = "dummy-tournament",
                     isPublic = false,
                     tags = listOf("taggy"),
+                    isLocked = false,
+                    startDate = null,
+                    endDate = null,
                 )
             ),
             result.data
@@ -320,6 +339,9 @@ class SmsClientTest {
                     name = "dummy-tournament",
                     isPublic = false,
                     tags = listOf("tags-some"),
+                    isLocked = false,
+                    startDate = null,
+                    endDate = null,
                 )
             )
         )
@@ -342,6 +364,9 @@ class SmsClientTest {
                     name = "dummy-tournament",
                     isPublic = false,
                     tags = listOf("tags-some"),
+                    isLocked = false,
+                    startDate = null,
+                    endDate = null,
                 )
             ),
             finalResult.data
@@ -816,7 +841,10 @@ class SmsClientTest {
                         tournamentId = 1234,
                         name = "dummy",
                         isPublic = false,
-                        tags = listOf("some-tags")
+                        tags = listOf("some-tags"),
+                        isLocked = false,
+                        startDate = null,
+                        endDate = null,
                     )
                 )
             )
@@ -834,7 +862,10 @@ class SmsClientTest {
                         tournamentId = 1234,
                         name = "dummy",
                         isPublic = false,
-                        tags = listOf("some-tags")
+                        tags = listOf("some-tags"),
+                        isLocked = false,
+                        startDate = null,
+                        endDate = null,
                     )
                 )
             ),
