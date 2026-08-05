@@ -6,8 +6,6 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
 
 class SingleResumeContinuationTest {
 
@@ -17,10 +15,7 @@ class SingleResumeContinuationTest {
 
         launch {
             suspendCancellableCoroutine { rawContinuation: CancellableContinuation<Unit> ->
-                assertTrue(
-                    SingleResumeContinuation(rawContinuation).resume(),
-                    message = "Expected the continuation to be resumed"
-                )
+                SingleResumeContinuation(rawContinuation).resume()
             }
 
             ++resumeCount
@@ -39,9 +34,9 @@ class SingleResumeContinuationTest {
 
                 // Without the single-resume guarantee the calls after the first one would throw an
                 // IllegalStateException ("Already resumed"), which is what used to crash the app
-                assertTrue(continuation.resume(), message = "Expected the first resume to resume the continuation")
-                assertFalse(continuation.resume(), message = "Did not expect the second resume to do anything")
-                assertFalse(continuation.resume(), message = "Did not expect the third resume to do anything")
+                continuation.resume()
+                continuation.resume()
+                continuation.resume()
             }
 
             ++resumeCount

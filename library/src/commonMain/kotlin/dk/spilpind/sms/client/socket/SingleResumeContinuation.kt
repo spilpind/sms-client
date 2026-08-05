@@ -29,16 +29,15 @@ internal class SingleResumeContinuation(private val continuation: CancellableCon
     }
 
     /**
-     * Resumes the underlying continuation, unless it was already resumed. Returns true if this call was the one
-     * actually resuming it
+     * Resumes the underlying continuation, unless it was already resumed - in which case this does nothing. Note that
+     * this deliberately returns nothing: a return value would make the type of a select clause calling this depend on
+     * it, which is surprising in a function that exists to be called from wherever
      */
-    fun resume(): Boolean {
+    fun resume() {
         if (!isResumed.compareAndSet(expect = false, update = true)) {
-            return false
+            return
         }
 
         continuation.resume(Unit)
-
-        return true
     }
 }
