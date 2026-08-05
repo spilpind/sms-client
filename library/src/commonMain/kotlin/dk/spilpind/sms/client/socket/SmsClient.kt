@@ -55,7 +55,6 @@ import kotlinx.coroutines.withTimeout
 import kotlinx.io.IOException
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
-import kotlin.coroutines.resume
 import kotlin.random.Random
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -141,7 +140,7 @@ class SmsClient(
         object Closed : IncomingResponseEvent
     }
 
-    private val outgoingRequests = Channel<Pair<Request, CancellableContinuation<Unit>>>()
+    private val outgoingRequests = Channel<Pair<Request, SingleResumeContinuation>>()
     private val incomingResponses: SharedFlow<IncomingResponseEvent> = channelFlow {
 
         // Mainly to make sure send can drop this event safely and still get notified about an early close
@@ -412,19 +411,26 @@ class SmsClient(
         // Note that we use coroutineScope { } here instead of the scope of the client as we can't be sure whether the scope is cancelled or will be.
         // In this way we make sure we will catch any cancellations via select/onAwait and still return something instead of rethrowing cancellation
         coroutineScope {
-            suspendCancellableCoroutine { continuation: CancellableContinuation<Unit> ->
+            suspendCancellableCoroutine { rawContinuation: CancellableContinuation<Unit> ->
+                // Once the request has been handed over via outgoingRequests, the receiver of it owns the continuation
+                // and will resume it when the request has been sent. We might however be cancelled in exactly that
+                // window, in which case we want to resume it ourselves (see below) - so both of us could end up
+                // resuming the very same continuation, which SingleResumeContinuation makes safe
+                val continuation = SingleResumeContinuation(rawContinuation)
+
                 launch {
                     try {
                         select {
                             resultDeferred.onAwait {
-                                continuation.resume(Unit)
+                                continuation.resume()
                             }
                             outgoingRequests.onSend(Pair(request, continuation)) {}
                         }
                     } catch (scopeCancellation: CancellationException) {
                         // The client scope got cancelled, but we want to return something to the caller of send()
-                        // instead of rethrowing the cancellation
-                        continuation.resume(Unit)
+                        // instead of rethrowing the cancellation. Note that this is also reached if we get cancelled
+                        // right after the request was handed over, in which case the resume is a no-op
+                        continuation.resume()
                     }
                 }
             }
@@ -475,7 +481,7 @@ class SmsClient(
                 while (true) {
                     val (_, continuation) = outgoingRequests.receive()
                     incomingResponses.send(IncomingResponseEvent.Closed)
-                    continuation.resume(Unit) // TODO: Could we avoid this by handling it in send?
+                    continuation.resume() // TODO: Could we avoid this by handling it in send?
                 }
             }
             SmsClientState.ReadyToStart -> {}
@@ -608,7 +614,7 @@ class SmsClient(
                         Logger.unexpected("Could not serialize outgoing message: $request", exception)
                         continue
                     } finally {
-                        continuation.resume(Unit)
+                        continuation.resume()
                     }
 
                 }
