@@ -4,6 +4,7 @@ import co.touchlab.kermit.Logger
 import dk.anigif.kmp.flow.WhileSubscribedWithMinimumLifetime
 import dk.anigif.kmp.flow.onUnsubscription
 import dk.anigif.kmp.log.KermitExtension.unexpected
+import dk.spilpind.sms.api.Endpoints
 import dk.spilpind.sms.api.Request
 import dk.spilpind.sms.api.RequestSerializerInterceptor
 import dk.spilpind.sms.api.Response
@@ -91,9 +92,6 @@ class SmsClient(
     companion object {
         private const val SERVER_PROD_HOST = "sms.spilpind.dk"
         private const val SERVER_BETA_HOST = "sms-beta.spilpind.dk"
-
-        private const val SERVER_STATUS_PATH = "/api/v1/status"
-        private const val SERVER_STREAM_PATH = "/api/v1/stream"
 
         private const val INCOMING_RESPONSES_REPLAY = 1
 
@@ -591,9 +589,9 @@ class SmsClient(
 
     private suspend fun checkServerStatus(host: String): ConnectionResult {
         return try {
-            val result = client.get("https://$host$SERVER_STATUS_PATH") {
+            val result = client.get("https://$host${Endpoints.Path.STATUS}") {
                 // The status can contain a localized message, so the server needs to know the language here as well
-                url.parameters.append(Language.QUERY_KEY, language.languageKey)
+                url.parameters.append(Endpoints.Query.LANGUAGE, language.languageKey)
             }
             if (result.status.value >= 400) {
                 Logger.unexpected("Got unexpected result from endpoint while getting status: ${result.status}")
@@ -631,8 +629,8 @@ class SmsClient(
         client.createSocket(
             WebsocketConfig(
                 host = host,
-                path = SERVER_STREAM_PATH,
-                parameters = mapOf(Language.QUERY_KEY to language.languageKey)
+                path = Endpoints.Path.STREAM,
+                parameters = mapOf(Endpoints.Query.LANGUAGE to language.languageKey)
             )
         ) {
             val outgoingRequestJob = launch {

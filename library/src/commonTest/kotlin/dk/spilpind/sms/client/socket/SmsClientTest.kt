@@ -1,6 +1,7 @@
 package dk.spilpind.sms.client.socket
 
 import dk.spilpind.sms.client.socket.util.TestSocketConnection
+import dk.spilpind.sms.api.Endpoints
 import dk.spilpind.sms.api.Request
 import dk.spilpind.sms.api.RequestSerializerInterceptor
 import dk.spilpind.sms.api.Response
@@ -108,11 +109,11 @@ class SmsClientTest {
         // them have to ask for the language
         assertEquals(
             Language.English.languageKey,
-            statusRequestUrls.singleOrNull()?.parameters?.get(Language.QUERY_KEY),
+            statusRequestUrls.singleOrNull()?.parameters?.get(Endpoints.Query.LANGUAGE),
             message = "Expected the status request to ask for the language"
         )
         assertEquals(
-            mapOf(Language.QUERY_KEY to Language.English.languageKey),
+            mapOf(Endpoints.Query.LANGUAGE to Language.English.languageKey),
             socketConfig?.parameters,
             message = "Expected the socket connection to ask for the language"
         )
