@@ -1,6 +1,7 @@
 package dk.spilpind.sms.client.socket
 
 import dk.spilpind.sms.client.socket.util.TestSocketConnection
+import dk.spilpind.sms.api.Endpoints
 import dk.spilpind.sms.api.Request
 import dk.spilpind.sms.api.RequestSerializerInterceptor
 import dk.spilpind.sms.api.Response
@@ -9,6 +10,7 @@ import dk.spilpind.sms.api.action.ReactionData
 import dk.spilpind.sms.api.action.TeamAction
 import dk.spilpind.sms.api.action.TournamentAction
 import dk.spilpind.sms.api.action.TournamentReaction
+import dk.spilpind.sms.api.common.Language
 import dk.spilpind.sms.api.common.Reaction
 import dk.spilpind.sms.api.core.Status
 import dk.spilpind.sms.core.model.Context
@@ -16,6 +18,7 @@ import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.Url
 import io.ktor.http.headersOf
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.websocket.Frame
@@ -53,12 +56,16 @@ class SmsClientTest {
 
     private val testDispatcher = StandardTestDispatcher()
 
+    private val statusRequestUrls = mutableListOf<Url>()
+
     private val mockEngine = MockEngine.create {
 
         // If we use default runCurrent() won't work
         dispatcher = testDispatcher
 
-        requestHandlers.add {
+        requestHandlers.add { request ->
+            statusRequestUrls.add(request.url)
+
             respond(
                 content = ByteReadChannel(
                     Json.encodeToString(
@@ -73,6 +80,43 @@ class SmsClientTest {
                 headers = headersOf(HttpHeaders.ContentType, "application/json")
             )
         }
+    }
+
+    @Test
+    fun connectingAsksTheServerForTheGivenLanguage() = runTest(testDispatcher) {
+        val socketConnection = TestSocketConnection()
+        var socketConfig: SmsClient.WebsocketConfig? = null
+
+        val client = SmsClient(
+            scope = backgroundScope,
+            useBetaEndpoint = false,
+            language = Language.English,
+            createSocket = createSocket@{ config, block ->
+                socketConfig = config
+                socketConnection.startFakeSocket(client = this, block = block)
+            },
+            engine = mockEngine
+        )
+
+        launch {
+            client.send(TournamentAction.Add("dummy"))
+        }
+
+        runCurrent()
+        assertEquals(1, socketConnection.startCount, message = "Expected socket connection created at this point")
+
+        // The status is checked before the socket is opened and can contain a localized message as well, so both of
+        // them have to ask for the language
+        assertEquals(
+            Language.English.languageKey,
+            statusRequestUrls.singleOrNull()?.parameters?.get(Endpoints.Query.LANGUAGE),
+            message = "Expected the status request to ask for the language"
+        )
+        assertEquals(
+            mapOf(Endpoints.Query.LANGUAGE to Language.English.languageKey),
+            socketConfig?.parameters,
+            message = "Expected the socket connection to ask for the language"
+        )
     }
 
     @Test
@@ -382,6 +426,7 @@ class SmsClientTest {
         val client = SmsClient(
             scope = backgroundScope,
             useBetaEndpoint = false,
+            language = Language.Danish,
             createSocket = createSocket@{ _, _ ->
                 throw IllegalArgumentException("This is just a random picked exception type")
             },
@@ -398,6 +443,7 @@ class SmsClientTest {
         val client = SmsClient(
             scope = backgroundScope,
             useBetaEndpoint = false,
+            language = Language.Danish,
             createSocket = createSocket@{ _, _ ->
                 delay(100_000)
             },
@@ -1132,6 +1178,7 @@ class SmsClientTest {
         val client = SmsClient(
             scope = backgroundScope,
             useBetaEndpoint = false,
+            language = Language.Danish,
             createSocket = createSocket@{ _, block ->
                 delay(10_000)
                 socketConnection.startFakeSocket(client = this, block = block)
@@ -1237,6 +1284,7 @@ class SmsClientTest {
         val client = SmsClient(
             scope = backgroundScope,
             useBetaEndpoint = false,
+            language = Language.Danish,
             createSocket = createSocket@{ _, block ->
                 val firstTime = startCount == 0
                 ++startCount
@@ -1507,6 +1555,7 @@ class SmsClientTest {
         val client = SmsClient(
             scope = backgroundScope,
             useBetaEndpoint = false,
+            language = Language.Danish,
             createSocket = createSocket@{ _, block ->
                 ++startCount
                 socketConnection = TestSocketConnection()
@@ -1575,6 +1624,7 @@ class SmsClientTest {
         val client = SmsClient(
             scope = backgroundScope,
             useBetaEndpoint = false,
+            language = Language.Danish,
             createSocket = createSocket@{ _, block ->
                 ++startCount
                 socketConnection = TestSocketConnection()
@@ -1653,6 +1703,7 @@ class SmsClientTest {
         val client = SmsClient(
             scope = backgroundScope,
             useBetaEndpoint = false,
+            language = Language.Danish,
             createSocket = createSocket@{ _, block ->
                 ++startCount
                 socketConnection = TestSocketConnection()
@@ -1881,6 +1932,7 @@ class SmsClientTest {
         return SmsClient(
             scope = scope,
             useBetaEndpoint = false,
+            language = Language.Danish,
             createSocket = createSocket@{ _, block ->
                 socketConnection.startFakeSocket(client = this, block = block)
             },

@@ -4,12 +4,14 @@ import co.touchlab.kermit.Logger
 import dk.anigif.kmp.flow.WhileSubscribedWithMinimumLifetime
 import dk.anigif.kmp.flow.onUnsubscription
 import dk.anigif.kmp.log.KermitExtension.unexpected
+import dk.spilpind.sms.api.Endpoints
 import dk.spilpind.sms.api.Request
 import dk.spilpind.sms.api.RequestSerializerInterceptor
 import dk.spilpind.sms.api.Response
 import dk.spilpind.sms.api.ResponseSerializerInterceptor
 import dk.spilpind.sms.api.action.ContextAction
 import dk.spilpind.sms.api.action.ReactionData
+import dk.spilpind.sms.api.common.Language
 import dk.spilpind.sms.api.core.Status
 import dk.spilpind.sms.core.TimeHelper
 import io.ktor.client.HttpClient
@@ -61,16 +63,28 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Handles all interaction with the SMS server
+ * Handles all interaction with the SMS server. Localized messages from the server are in [language], which is sent
+ * along when the connection is established - see [changeLanguage] for changing it afterwards. Note that no default is
+ * provided as the caller is the one knowing what language the user wants
  */
 class SmsClient(
     private val scope: CoroutineScope,
     private var useBetaEndpoint: Boolean,
+    private var language: Language,
     private val createSocket: suspend HttpClient.(
         config: WebsocketConfig,
         block: suspend DefaultClientWebSocketSession.() -> Unit
     ) -> Unit = { config, block ->
-        wss(host = config.host, path = config.path, block = block)
+        wss(
+            host = config.host,
+            path = config.path,
+            request = {
+                config.parameters.forEach { (key, value) ->
+                    url.parameters.append(key, value)
+                }
+            },
+            block = block
+        )
     },
     engine: HttpClientEngine? = null
 ) {
@@ -78,9 +92,6 @@ class SmsClient(
     companion object {
         private const val SERVER_PROD_HOST = "sms.spilpind.dk"
         private const val SERVER_BETA_HOST = "sms-beta.spilpind.dk"
-
-        private const val SERVER_STATUS_PATH = "/api/v1/status"
-        private const val SERVER_STREAM_PATH = "/api/v1/stream"
 
         private const val INCOMING_RESPONSES_REPLAY = 1
 
@@ -113,7 +124,7 @@ class SmsClient(
         }
     }
 
-    data class WebsocketConfig(val host: String, val path: String)
+    data class WebsocketConfig(val host: String, val path: String, val parameters: Map<String, String>)
 
     private sealed interface ConnectionResult {
         data class ServerStatus(val serverStatus: Status) : ConnectionResult
@@ -337,6 +348,39 @@ class SmsClient(
             return
         }
 
+        restart(onClearCache = onClearCache) {
+            useBetaEndpoint = useBeta
+        }
+    }
+
+    /**
+     * Changes the [language] the server is asked to localize its messages in. As the language is part of establishing
+     * the connection, this reconnects the client - which is expected to be fine as the language isn't expected to
+     * change often
+     */
+    suspend fun changeLanguage(
+        language: Language,
+        onClearCache: () -> Unit
+    ) {
+        if (this.language == language) {
+            Logger.w("Trying to change language when it won't make a difference (language=$language)")
+            return
+        }
+
+        restart(onClearCache = onClearCache) {
+            this.language = language
+        }
+    }
+
+    /**
+     * Stops the connection, applies [applyChange] while nothing is connected and makes the client ready to connect
+     * again with the changed configuration. [onClearCache] is called once the connection is fully stopped, so the
+     * caller can get rid of anything that was cached from the previous connection
+     */
+    private suspend fun restart(
+        onClearCache: () -> Unit,
+        applyChange: () -> Unit
+    ) {
         // Requesting to stop (if it makes sense)
         _state.update { state ->
             Logger.d("Stopping SmsClient while in state $state")
@@ -376,7 +420,7 @@ class SmsClient(
 
         onClearCache()
 
-        useBetaEndpoint = useBeta
+        applyChange()
 
         Logger.d("Finished restarting SmsClient and setting it to ready again")
 
@@ -497,7 +541,7 @@ class SmsClient(
             SERVER_BETA_HOST
         }
 
-        Logger.i("Connecting to SMS server with host $host")
+        Logger.i("Connecting to SMS server with host $host and language ${language.languageKey}")
 
         val connectionResult = checkServerStatus(host = host)
 
@@ -545,7 +589,10 @@ class SmsClient(
 
     private suspend fun checkServerStatus(host: String): ConnectionResult {
         return try {
-            val result = client.get("https://$host$SERVER_STATUS_PATH")
+            val result = client.get("https://$host${Endpoints.Path.STATUS}") {
+                // The status can contain a localized message, so the server needs to know the language here as well
+                url.parameters.append(Endpoints.Query.LANGUAGE, language.languageKey)
+            }
             if (result.status.value >= 400) {
                 Logger.unexpected("Got unexpected result from endpoint while getting status: ${result.status}")
 
@@ -582,7 +629,8 @@ class SmsClient(
         client.createSocket(
             WebsocketConfig(
                 host = host,
-                path = SERVER_STREAM_PATH
+                path = Endpoints.Path.STREAM,
+                parameters = mapOf(Endpoints.Query.LANGUAGE to language.languageKey)
             )
         ) {
             val outgoingRequestJob = launch {
